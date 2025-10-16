@@ -1,3 +1,6 @@
+#include <WiFi.h>
+
+WiFiServer server(80);
 void setup() {
   // put your setup code here, to run once:
   // TODO: setup wifi
