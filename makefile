@@ -15,3 +15,5 @@ drumbot_c:
 	arduino-cli compile ./drumbot/ -b esp32:esp32:esp32c6 -p dev/ttyACM0 --build-path .build/
 clean:
 	rm -R ./.build/
+server: 
+	python3 server/main.py
