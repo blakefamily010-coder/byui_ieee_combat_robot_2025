@@ -1,5 +1,9 @@
 
 void a_button() {
     // TODO:
-    server.send(204, "text/plain", "");
+    digitalWrite(test_button, HIGH);
+}
+void a_button_off() {
+    // TODO:
+    digitalWrite(test_button, LOW);
 }
