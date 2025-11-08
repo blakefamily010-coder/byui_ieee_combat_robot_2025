@@ -1,6 +1,7 @@
 ignore_time:
 	touch space_program/ -a
 	touch drumbot/ -a
+	touch server/ -a
 space_program: space_program_c ignore_time
 	mkdir -p .build/
 	arduino-cli upload -b esp32:esp32:esp32c6 -p dev/ttyACM0 --build-path .build/
@@ -15,5 +16,5 @@ drumbot_c:
 	arduino-cli compile ./drumbot/ -b esp32:esp32:esp32c6 -p dev/ttyACM0 --build-path .build/
 clean:
 	rm -R ./.build/
-server: 
+server: ignore_time
 	python3 server/main.py
