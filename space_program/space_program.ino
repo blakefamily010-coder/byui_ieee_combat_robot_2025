@@ -32,10 +32,12 @@ void setup() {
     //
     server.on("/control/a_button", HTTP_GET, [](AsyncWebServerRequest* request){
         Serial.println("A button rising edge");
+        a_button();
         request->send(204);
     });
     server.on("/control/a_button_off", HTTP_GET, [](AsyncWebServerRequest* request){
         Serial.println("A button falling edge");
+        a_button_off();
         request->send(204);
     });
     // server.on("/control/l_stick", HTTP_GET, [](AsyncWebServerRequest* request){
