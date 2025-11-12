@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
+// #include <AsyncTCP.h>
 
 AsyncWebServer server(80);
 
@@ -23,7 +24,7 @@ void setup() {
     // - setup disconect callback
     //     - stop if not connected
     Serial.begin(115200);
-    WiFi.mode(WIFI_AP);
+    WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     // TODO: we cant detect if a client disconects verry easily
     // make shure that the client regularly polls the server.
@@ -33,12 +34,14 @@ void setup() {
     server.on("/control/a_button", HTTP_GET, [](AsyncWebServerRequest* request){
         Serial.println("A button rising edge");
         a_button();
-        request->send(204);
+        request->send(200, "text/plain", "Hello, world");
+        // request->send(204);
     });
     server.on("/control/a_button_off", HTTP_GET, [](AsyncWebServerRequest* request){
         Serial.println("A button falling edge");
         a_button_off();
-        request->send(204);
+        request->send(200, "text/plain", "Hello, world");
+        // request->send(204);
     });
     // server.on("/control/l_stick", HTTP_GET, [](AsyncWebServerRequest* request){
     //     if (request->hasParam("x") && (request->hasParam("y"))) {
