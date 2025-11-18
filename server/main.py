@@ -13,7 +13,7 @@ for device in devices:
 
 
 def send(route):
-    """Send a GET request to ESP32 route, ignoring the response."""
+    # """Send a GET request to ESP32 route, ignoring the response."""
     url = f"{ESP32_IP_ADDR}/{route}"
     try:
         # requests.get(url, timeout=0.2)
@@ -61,16 +61,16 @@ while True:
         match event.code:
             case "ABS_X":
                 lstickx = event.state
-                send(f"control/{lstickx}/{lsticky}")
+                send(f"control/{lstickx:x}/{lsticky:x}")
             case "ABS_Y":
                 lsticky = event.state
-                send(f"control/{lstickx}/{lsticky}")
+                send(f"control/{lstickx:x}/{lsticky:x}")
             case "ABS_RX":
                 rstickx = event.state
-                send(f"control/{rstickx}/{rsticky}")
+                send(f"control/{rstickx:x}/{rsticky:x}")
             case "ABS_RY":
                 rsticky = event.state
-                send(f"control/{rstickx}/{rsticky}")
+                send(f"control/{rstickx:x}/{rsticky:x}")
             # case "ABS_HAT0X":
             #     match event.state:
             #         case 1:
