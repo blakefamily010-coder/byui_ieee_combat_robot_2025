@@ -1,8 +1,9 @@
 #include <WiFi.h>
-#include <ESPAsyncWebServer.h>
+#include <WebServer.h>
 // #include <AsyncTCP.h>
+#include <uri/UriBraces.h>
 
-AsyncWebServer server(80);
+WebServer server(80);
 
 const char WIFI_SSID[] = "space_program";
 const char WIFI_PASSWORD[] = "538976";
@@ -23,7 +24,7 @@ void setup() {
     // - connect to network
     // - setup disconect callback
     //     - stop if not connected
-    Serial.begin(115200);
+    Serial.begin(9600);
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     // TODO: we cant detect if a client disconects verry easily
@@ -31,18 +32,27 @@ void setup() {
     //
     // WiFi.onEvent(Disconect, ARDUINO_EVENT_WIFI_AP_DISCONNECTED)
     //
-    server.on("/control/a_button", HTTP_GET, [](AsyncWebServerRequest* request){
-        Serial.println("A button rising edge");
-        a_button();
-        request->send(200, "text/plain", "Hello, world");
-        // request->send(204);
+    // server.on("/control/a_button", HTTP_GET, [](ServerRequest* request){
+    //     Serial.println("A button rising edge");
+    //     a_button();
+    //     server.send(204);
+    // });
+    server.on(UriBraces("/control/l_stick/{}/{}"), []() {
+        String lstickx = server.pathArg(0);
+        String lsticky = server.pathArg(1);
+        server.send(204);
     });
-    server.on("/control/a_button_off", HTTP_GET, [](AsyncWebServerRequest* request){
+    server.on(UriBraces("/control/a_button_off"), []() {
         Serial.println("A button falling edge");
-        a_button_off();
-        request->send(200, "text/plain", "Hello, world");
-        // request->send(204);
+        server.send(204);
     });
+    // server.on("/control/a_button_off", HTTP_GET, [](AsyncWebServerRequest* request){
+    //     Serial.println("A button falling edge");
+    //     a_button_off();
+    //     server.send(204);
+    //     // request->send(200, "text/plain", "Hello, world");
+    //     // request->send(204);
+    // });
     // server.on("/control/l_stick", HTTP_GET, [](AsyncWebServerRequest* request){
     //     if (request->hasParam("x") && (request->hasParam("y"))) {
     //         float x = request->getParam("x")->value().toFloat();
@@ -57,4 +67,6 @@ void setup() {
 
 void loop() {
     // put your main code here, to run repeatedly:
+    server.handleClient();
+    delay(2);
 }
