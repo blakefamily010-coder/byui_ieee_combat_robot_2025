@@ -18,3 +18,5 @@ clean:
 	rm -R ./.build/
 server: ignore_time
 	python3 server/main.py
+minicom:
+	minicom -b 9600
