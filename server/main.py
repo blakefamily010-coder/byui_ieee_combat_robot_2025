@@ -27,6 +27,7 @@ lstickx = 0
 lsticky = 0
 rstickx = 0
 rsticky = 0
+ltrig = 0
 while True:
     # # events
     #
@@ -61,16 +62,20 @@ while True:
         match event.code:
             case "ABS_X":
                 lstickx = event.state
-                send(f"control/{lstickx:x}/{lsticky:x}")
+                send(f"control/lstick/{lstickx:x}/{lsticky:x}")
             case "ABS_Y":
                 lsticky = event.state
-                send(f"control/{lstickx:x}/{lsticky:x}")
+                send(f"control/lstick/{lstickx:x}/{lsticky:x}")
             case "ABS_RX":
                 rstickx = event.state
-                send(f"control/{rstickx:x}/{rsticky:x}")
+                send(f"control/lstick/{rstickx:x}/{rsticky:x}")
             case "ABS_RY":
                 rsticky = event.state
-                send(f"control/{rstickx:x}/{rsticky:x}")
+                send(f"control/rstick/{rstickx:x}/{rsticky:x}")
+            case "ABS_Z":
+                ltrig = event.state
+                send(f"control/rstick/{ltrig:x}")
+
             # case "ABS_HAT0X":
             #     match event.state:
             #         case 1:
@@ -97,6 +102,7 @@ while True:
                     send("control/y_button")
                 else:
                     send("control/y_button_off")
-            case "BTN_TL":
+            # case "BTN_TL":
 
+    send("/connect")
     time.sleep(UPDATE_INTERVAL_S)

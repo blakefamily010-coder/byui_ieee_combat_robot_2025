@@ -3,9 +3,9 @@
 // #include <AsyncTCP.h>
 #include <uri/UriBraces.h>
 #include <esp_task_wdt.h>
+#include <Servo.h>
 
 WebServer server(80);
-#include <Servo.h>
 
 const char WIFI_SSID[] = "space_program";
 const char WIFI_PASSWORD[] = "538976";
