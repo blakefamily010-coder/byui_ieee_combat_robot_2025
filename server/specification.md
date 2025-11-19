@@ -76,3 +76,7 @@ every __n__ seconds, gives the x and y of the l_stick
 ### /control/r_stick/*x*/*y*
 
 every __n__ seconds, gives the x and y of the r_stick
+
+## /connect
+
+send every __n__ seconds to show it is connected
