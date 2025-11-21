@@ -9,7 +9,20 @@ WebServer server(80);
 
 const char WIFI_SSID[] = "space_program";
 const char WIFI_PASSWORD[] = "538976";
-const int test_pin = 21;
+
+// TODO: rename to more clear names
+const uint8_t L_speed = 27; // L motor PWM
+const uint8_t L_dir1 = 25; // L motor direction control 1
+const uint8_t L_dir2 = 26; // L motor direction control 2
+const uint8_t R_speed = 14; // R motor PWM
+const uint8_t R_dir1 = 12; // R motor direction control 1
+const uint8_t R_dir2 = 13; // R motor direction control 2
+const uint8_t W_motor_PWM = 5;
+const uint8_t W_dir1 = 32;
+const uint8_t W_dir2 = 33;
+// TODO: add control pin
+
+
 const esp_task_wdt_config_t watchdog_config(1, false);
 Servo ESC;     // create servo object to control the ESC
 
