@@ -17,9 +17,7 @@ const uint8_t L_dir2 = 26; // L motor direction control 2
 const uint8_t R_speed = 14; // R motor PWM
 const uint8_t R_dir1 = 12; // R motor direction control 1
 const uint8_t R_dir2 = 13; // R motor direction control 2
-const uint8_t W_motor_PWM = 5;
-const uint8_t W_dir1 = 32;
-const uint8_t W_dir2 = 33;
+const uint8_t W_motor_SIGNAL = 5;
 // TODO: add control pin
 
 
@@ -47,9 +45,6 @@ void setup() {
     Serial.begin(9600);
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    // TODO: we cant detect if a client disconects verry easily
-    // make shure that the client regularly polls the server.
-    //
     // start watchdog
     esp_task_wdt_init(&watchdog_config); //enable panic so ESP32 restarts
     esp_task_wdt_add(NULL); //add current thread to WDT watch
@@ -60,8 +55,14 @@ void setup() {
     // WiFi.onEvent(Disconect, ARDUINO_EVENT_WIFI_AP_DISCONNECTED)
     //
     server.on(UriBraces("/control/l_stick/{}/{}"), []() {
-        String lstickx = server.pathArg(0);
-        String lsticky = server.pathArg(1);
+
+        int lstickx = 0;
+        int lsticky = 0;
+        sscanf(server.pathArg(0), "%x", &lstickx);
+        sscanf(server.pathArg(1), "%x", &lsticky);
+
+        movementControl(lstickx, lsticky);
+
         server.send(204);
     });
     server.on(UriBraces("/control/a_button_off"), []() {
@@ -75,7 +76,7 @@ void setup() {
         server.send(204);
     });
     // Attach the ESC on pin 9
-    ESC.attach(9,1000,2000); // (pin, min pulse width, max pulse width in microseconds)
+    ESC.attach(W_motor_SIGNAL,1000,2000); // (pin, min pulse width, max pulse width in microseconds)
 
     pinMode(L_speed, OUTPUT);
     pinMode(L_dir1, OUTPUT);
