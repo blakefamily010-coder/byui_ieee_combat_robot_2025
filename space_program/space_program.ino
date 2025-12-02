@@ -101,16 +101,18 @@ void loop() {
     delay(2);
 }
 
-void weaponControl(int joy2Value) {
+void weaponControl(int l_trigger) {
 
-    motorValue = map(joy2Value, 0, 1023, 0, 180);   // scale it to use it with the servo library (value between 0 and 180)
+    motorValue = map(l_trigger, 0, 1023, -256, 255);
 }
 
 void movementControl(int joy1_X_Value, int joy1_Y_Value) {
     // Convert to -255..255 ranges
     // may be -2048 / 2047
-    throttle = map(joy1_Y_Value, 0, 2047, -256, 255);   // forward/back
-    steering = map(joy1_X_Value, 0, 2047, -256, 255);   // left/right
+    //
+    // range of int8_t is -256 to 255
+    throttle = map(joy1_Y_Value, -2048, 2047, -256, 255);   // forward/back
+    steering = map(joy1_X_Value, -2048, 2047, -256, 255);   // left/right
 
     // Differential motor mixing
     leftCmd  = throttle + steering;
