@@ -4,7 +4,7 @@ from inputs import devices
 import requests
 import time
 
-ESP32_IP_ADDR = "http://192.168.0.0"  # should be the address of a router
+ESP32_IP_ADDR = "http://10.57.236.200"  # should be the address of a router
 UPDATE_INTERVAL_S = 0.1
 TRIGGER_THRESHOLD = 700
 
@@ -28,7 +28,17 @@ lsticky = 0
 rstickx = 0
 rsticky = 0
 ltrig = 0
+button_triggered = False
+button_time = float("inf")
 while True:
+    timer = time.clock_gettime(time.CLOCK_MONOTONIC);
+    if button_triggered:
+        send("/control/a_button")
+        button_triggered = False
+        button_time = time + 0.7
+    if (timer > button_time):
+        button_time = float("inf")
+        send("/control/a_button_off")
     # # events
     #
     # ABS_X -> left stick x
@@ -84,9 +94,11 @@ while True:
             #         case 0:
             case "BTN_SOUTH":
                 if event.state:
-                    send("control/a_button")
+                    button_triggered = True
+                    # send("control/a_button")
                 else:
-                    send("control/a_button_off")
+                    pass
+                    # send("control/a_button_off")
             case "BTN_EAST":
                 if event.state:
                     send("control/y_button")

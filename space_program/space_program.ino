@@ -7,19 +7,20 @@
 
 WebServer server(80);
 
-const char WIFI_SSID[] = "optix";
-const char WIFI_PASSWORD[] = "onmyhonor";
+const char WIFI_SSID[] = "esp32test";
+const char WIFI_PASSWORD[] = "test1234";
 
 // TODO: rename to more clear names
 const uint8_t L_speed = 27; // L motor PWM
 const uint8_t L_dir1 = 25; // L motor direction control 1
 const uint8_t L_dir2 = 26; // L motor direction control 2
-const uint8_t R_speed = 18; // R motor PWM
+const uint8_t R_speed = 21; // R motor PWM
 const uint8_t R_dir1 = 20; // R motor direction control 1
 const uint8_t R_dir2 = 19; // R motor direction control 2
 const uint8_t W_motor_PWM = 5;
-const uint8_t W_dir1 = 32;
-const uint8_t W_dir2 = 33;
+const uint8_t W_dir1 = 18;
+const uint8_t W_dir2 = 19;
+const uint8_t test_pin = 12;
 // TODO: add control pin
 
 
@@ -38,6 +39,7 @@ void connect_poll() {
 void handle_wifi_events(WiFiEvent_t event) {
     switch (event) {
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+            delay(200)
             Serial.print("ip addr: ");
             Serial.println(WiFi.localIP());
     }
@@ -49,7 +51,7 @@ void setup() {
     // - connect to network
     // - setup disconect callback
     //     - stop if not connected
-    Serial.begin(9600);
+    Serial.begin(115200);
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     WiFi.onEvent(handle_wifi_events);
@@ -82,17 +84,19 @@ void setup() {
         server.send(204);
     });
     server.on(UriBraces("/control/l_trigger/{}"), []() {
-        l_trigger = server.pathArg(0).toInt();
+        Serial.println("test1");
+        int l_trigger = server.pathArg(0).toInt();
+        weapon_control(l_trigger);
 
     });
     server.on(UriBraces("/control/a_button_off"), []() {
         Serial.println("A button falling edge");
-        a_button_off();
+        movementControl(W_motor_PWM, W_dir1, W_dir2, 255);
         server.send(204);
     });
     server.on(UriBraces("/control/a_button"), []() {
-        Serial.println("A button falling edge");
-        a_button();
+        Serial.println("A button rising edge");
+        movementControl(W_motor_PWM, W_dir1, W_dir2, 0);
         server.send(204);
     });
 
@@ -115,13 +119,14 @@ void setup() {
 void loop() {
     // put your main code here, to run repeatedly:
     server.handleClient();
-    delay(100);
+    delay(20);
     esp_task_wdt_reset();
 }
 
 void weapon_control(int l_trigger) {
 
     int motor_cmd = map(l_trigger, 0, 1023, -255, 255);
+    setMotor(W_motor_PWM, W_dir1, W_dir2, motor_cmd);
 
 }
 
