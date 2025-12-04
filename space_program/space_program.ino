@@ -3,37 +3,44 @@
 // #include <AsyncTCP.h>
 #include <uri/UriBraces.h>
 #include <esp_task_wdt.h>
-#include <Servo.h>
+// #include <Servo.h>
 
 WebServer server(80);
 
-const char WIFI_SSID[] = "space_program";
-const char WIFI_PASSWORD[] = "538976";
+const char WIFI_SSID[] = "optix";
+const char WIFI_PASSWORD[] = "onmyhonor";
 
 // TODO: rename to more clear names
 const uint8_t L_speed = 27; // L motor PWM
 const uint8_t L_dir1 = 25; // L motor direction control 1
 const uint8_t L_dir2 = 26; // L motor direction control 2
-const uint8_t R_speed = 14; // R motor PWM
-const uint8_t R_dir1 = 12; // R motor direction control 1
-const uint8_t R_dir2 = 13; // R motor direction control 2
+const uint8_t R_speed = 18; // R motor PWM
+const uint8_t R_dir1 = 20; // R motor direction control 1
+const uint8_t R_dir2 = 19; // R motor direction control 2
 const uint8_t W_motor_PWM = 5;
 const uint8_t W_dir1 = 32;
 const uint8_t W_dir2 = 33;
 // TODO: add control pin
 
 
-const esp_task_wdt_config_t watchdog_config(1, false);
-Servo ESC;     // create servo object to control the ESC
+const esp_task_wdt_config_t watchdog_config(10, false);
+// Servo ESC;     // create servo object to control the ESC
 
 void disconect() {
     // TODO: make the thing go OFF!
     Serial.println("WIFI disconected");
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    pinMode(test_pin, OUTPUT);
+    // pinMode(test_pin, OUTPUT);
 }
 void connect_poll() {
     esp_task_wdt_reset();
+}
+void handle_wifi_events(WiFiEvent_t event) {
+    switch (event) {
+        case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+            Serial.print("ip addr: ");
+            Serial.println(WiFi.localIP());
+    }
 }
 
 void setup() {
@@ -45,6 +52,7 @@ void setup() {
     Serial.begin(9600);
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    WiFi.onEvent(handle_wifi_events);
 
     // NOTE: this is EXTREAMLY important, it should only be touched with good reason
     // ensure that the robot is OFF while it cannot recieve commands
@@ -60,15 +68,22 @@ void setup() {
     // WiFi.onEvent(Disconect, ARDUINO_EVENT_WIFI_AP_DISCONNECTED)
     //
     server.on(UriBraces("/control/l_stick/{}/{}"), []() {
+        Serial.println("test");
 
         int lstickx = 0;
         int lsticky = 0;
-        sscanf(server.pathArg(0), "%x", &lstickx);
-        sscanf(server.pathArg(1), "%x", &lsticky);
+        // sscanf(&server.pathArg(0), "%x", &lstickx);
+        // sscanf(&server.pathArg(1), "%x", &lsticky);
+        lstickx = server.pathArg(0).toInt();
+        lsticky = server.pathArg(1).toInt();
 
         movementControl(lstickx, lsticky);
 
         server.send(204);
+    });
+    server.on(UriBraces("/control/l_trigger/{}"), []() {
+        l_trigger = server.pathArg(0).toInt();
+
     });
     server.on(UriBraces("/control/a_button_off"), []() {
         Serial.println("A button falling edge");
@@ -92,35 +107,38 @@ void setup() {
     pinMode(W_motor_PWM, OUTPUT);
     pinMode(W_dir1, OUTPUT);
     pinMode(W_dir2, OUTPUT);
+    
+    server.begin();
 
 }
 
 void loop() {
     // put your main code here, to run repeatedly:
     server.handleClient();
-    delay(2);
+    delay(100);
+    esp_task_wdt_reset();
 }
 
-void weaponControl(int l_trigger) {
+void weapon_control(int l_trigger) {
 
-    motorValue = map(l_trigger, 0, 1023, -256, 255);
+    int motor_cmd = map(l_trigger, 0, 1023, -255, 255);
+
 }
 
 void movementControl(int joy1_X_Value, int joy1_Y_Value) {
     // Convert to -255..255 ranges
     // may be -2048 / 2047
     //
-    // range of int8_t is -256 to 255
-    throttle = map(joy1_Y_Value, -2048, 2047, -256, 255);   // forward/back
-    steering = map(joy1_X_Value, -2048, 2047, -256, 255);   // left/right
+    int throttle = map(joy1_Y_Value, -2048, 2047, -255, 255);   // forward/back
+    int steering = map(joy1_X_Value, -2048, 2047, -255, 255);   // left/right
 
     // Differential motor mixing
-    leftCmd  = throttle + steering;
-    rightCmd = throttle - steering;
+    int leftCmd  = throttle + steering;
+    int rightCmd = throttle - steering;
 
     // Constrain output to motor-safe range
-    leftCmd  = constrain(leftCmd,  -256, 255);
-    rightCmd = constrain(rightCmd, -256, 255);
+    leftCmd  = constrain(leftCmd,  -255, 255);
+    rightCmd = constrain(rightCmd, -255, 255);
 
     // Send commands to motors
     setMotor(L_speed, L_dir1, L_dir2, leftCmd);
@@ -128,7 +146,7 @@ void movementControl(int joy1_X_Value, int joy1_Y_Value) {
 }
 
 void setMotor(int pwmPin, int d1, int d2, int cmd) {
-    int speedVal = abs(cmd);
+    uint8_t speedVal = abs(cmd);
 
     if (cmd > 0) {// Forward
         digitalWrite(d1, HIGH);

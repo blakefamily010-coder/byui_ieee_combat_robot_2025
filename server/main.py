@@ -16,7 +16,7 @@ def send(route):
     # """Send a GET request to ESP32 route, ignoring the response."""
     url = f"{ESP32_IP_ADDR}/{route}"
     try:
-        # requests.get(url, timeout=0.2)
+        requests.get(url, timeout=0.2)
         print(f"sent {url}")
     except requests.RequestException:
         print(f"failed to send {url}")
@@ -62,19 +62,19 @@ while True:
         match event.code:
             case "ABS_X":
                 lstickx = event.state
-                send(f"control/lstick/{lstickx:x}/{lsticky:x}")
+                send(f"control/lstick/0x{lstickx:x}/{lsticky:x}")
             case "ABS_Y":
                 lsticky = event.state
-                send(f"control/lstick/{lstickx:x}/{lsticky:x}")
+                send(f"control/lstick/0x{lstickx:x}/0x{lsticky:x}")
             case "ABS_RX":
                 rstickx = event.state
-                send(f"control/lstick/{rstickx:x}/{rsticky:x}")
+                send(f"control/lstick/0x{rstickx:x}/0x{rsticky:x}")
             case "ABS_RY":
                 rsticky = event.state
-                send(f"control/rstick/{rstickx:x}/{rsticky:x}")
+                send(f"control/rstick/0x{rstickx:x}/0x{rsticky:x}")
             case "ABS_Z":
                 ltrig = event.state
-                send(f"control/rstick/{ltrig:x}")
+                send(f"control/rstick/0x{ltrig:x}")
 
             # case "ABS_HAT0X":
             #     match event.state:
