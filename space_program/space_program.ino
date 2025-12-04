@@ -14,14 +14,15 @@ const char WIFI_PASSWORD[] = "test1234";
 const uint8_t L_speed = 27; // L motor PWM
 const uint8_t L_dir1 = 25; // L motor direction control 1
 const uint8_t L_dir2 = 26; // L motor direction control 2
-const uint8_t R_speed = 21; // R motor PWM
-const uint8_t R_dir1 = 20; // R motor direction control 1
-const uint8_t R_dir2 = 19; // R motor direction control 2
-const uint8_t W_motor_PWM = 5;
-const uint8_t W_dir1 = 18;
+const uint8_t R_speed = 14; // R motor PWM
+const uint8_t R_dir1 = 12; // R motor direction control 1
+const uint8_t R_dir2 = 13; // R motor direction control 2
+const uint8_t W_motor_PWM = 18;
+const uint8_t W_dir1 = 21;
 const uint8_t W_dir2 = 19;
-const uint8_t test_pin = 12;
 // TODO: add control pin
+const uint8_t D_STBY = 33;
+const uint8_t W_STBY = 5;
 
 
 const esp_task_wdt_config_t watchdog_config(10, false);
@@ -39,13 +40,15 @@ void connect_poll() {
 void handle_wifi_events(WiFiEvent_t event) {
     switch (event) {
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-            delay(200)
+            delay(200);
             Serial.print("ip addr: ");
             Serial.println(WiFi.localIP());
     }
 }
 
 void setup() {
+    digitalWrite(D_STBY, LOW);
+    digitalWrite(W_STBY, LOW);
     // put your setup code here, to run once:
     // TODO: setup wifi
     // - connect to network
@@ -91,12 +94,12 @@ void setup() {
     });
     server.on(UriBraces("/control/a_button_off"), []() {
         Serial.println("A button falling edge");
-        movementControl(W_motor_PWM, W_dir1, W_dir2, 255);
+        setMotor(W_motor_PWM, W_dir1, W_dir2, 255);
         server.send(204);
     });
     server.on(UriBraces("/control/a_button"), []() {
         Serial.println("A button rising edge");
-        movementControl(W_motor_PWM, W_dir1, W_dir2, 0);
+        setMotor(W_motor_PWM, W_dir1, W_dir2, 0);
         server.send(204);
     });
 
@@ -111,9 +114,14 @@ void setup() {
     pinMode(W_motor_PWM, OUTPUT);
     pinMode(W_dir1, OUTPUT);
     pinMode(W_dir2, OUTPUT);
+
     
     server.begin();
 
+    pinMode(D_STBY, OUTPUT);
+    digitalWrite(D_STBY, HIGH);
+    pinMode(W_STBY, OUTPUT);
+    digitalWrite(W_STBY, HIGH);
 }
 
 void loop() {
@@ -125,25 +133,24 @@ void loop() {
 
 void weapon_control(int l_trigger) {
 
-    int motor_cmd = map(l_trigger, 0, 1023, -255, 255);
+    int motor_cmd = map(l_trigger, 0, 0xffff, -255, 255);
     setMotor(W_motor_PWM, W_dir1, W_dir2, motor_cmd);
 
 }
 
 void movementControl(int joy1_X_Value, int joy1_Y_Value) {
     // Convert to -255..255 ranges
-    // may be -2048 / 2047
     //
-    int throttle = map(joy1_Y_Value, -2048, 2047, -255, 255);   // forward/back
-    int steering = map(joy1_X_Value, -2048, 2047, -255, 255);   // left/right
+    int throttle = map(joy1_Y_Value, -0x8000, 0x7fff, -0xff, 0xff);   // forward/back
+    int steering = map(joy1_X_Value, -0x8000, 0x7fff, -0xff, 0xff);   // left/right
 
     // Differential motor mixing
     int leftCmd  = throttle + steering;
     int rightCmd = throttle - steering;
 
     // Constrain output to motor-safe range
-    leftCmd  = constrain(leftCmd,  -255, 255);
-    rightCmd = constrain(rightCmd, -255, 255);
+    leftCmd  = constrain(leftCmd,  -0xff, 0xff);
+    rightCmd = constrain(rightCmd, -0xff, 0xff);
 
     // Send commands to motors
     setMotor(L_speed, L_dir1, L_dir2, leftCmd);

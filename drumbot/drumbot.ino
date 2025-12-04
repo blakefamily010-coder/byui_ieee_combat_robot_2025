@@ -30,7 +30,7 @@ void disconect() {
     // TODO: make the thing go OFF!
     Serial.println("WIFI disconected");
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    pinMode(test_pin, OUTPUT);
+    // pinMode(test_pin, OUTPUT);
 }
 void connect_poll() {
     esp_task_wdt_reset();
@@ -55,11 +55,14 @@ void setup() {
     // WiFi.onEvent(Disconect, ARDUINO_EVENT_WIFI_AP_DISCONNECTED)
     //
     server.on(UriBraces("/control/l_stick/{}/{}"), []() {
+        Serial.println("test");
 
         int lstickx = 0;
         int lsticky = 0;
-        sscanf(server.pathArg(0), "%x", &lstickx);
-        sscanf(server.pathArg(1), "%x", &lsticky);
+        // sscanf(&server.pathArg(0), "%x", &lstickx);
+        // sscanf(&server.pathArg(1), "%x", &lsticky);
+        lstickx = server.pathArg(0).toInt();
+        lsticky = server.pathArg(1).toInt();
 
         movementControl(lstickx, lsticky);
 
@@ -67,12 +70,12 @@ void setup() {
     });
     server.on(UriBraces("/control/a_button_off"), []() {
         Serial.println("A button falling edge");
-        a_button_off();
+        ESC.write(0)
         server.send(204);
     });
     server.on(UriBraces("/control/a_button"), []() {
         Serial.println("A button falling edge");
-        a_button();
+        ESC.write(180)
         server.send(204);
     });
     // Attach the ESC on pin 9
@@ -86,8 +89,8 @@ void setup() {
     pinMode(R_dir1, OUTPUT);
     pinMode(R_dir2, OUTPUT);
 
-    pinMode(joy1_Y, INPUT);
-    pinMode(joy1_X, INPUT);
+    pinMode()
+
 }
 
 void loop() {
@@ -101,15 +104,16 @@ void weaponControl(int joy2Value) {
     motorValue = map(joy2Value, 0, 1023, 0, 180);   // scale it to use it with the servo library (value between 0 and 180)
     ESC.write(motorValue);    // Send the signal to the ESC
 }
-
 void movementControl(int joy1_X_Value, int joy1_Y_Value) {
     // Convert to -255..255 ranges
-    throttle = map(joy1_Y_Value, 0, 1023, -255, 255);   // forward/back
-    steering = map(joy1_X_Value, 0, 1023, -255, 255);   // left/right
+    // may be -2048 / 2047
+    //
+    int throttle = map(joy1_Y_Value, -2048, 2047, -255, 255);   // forward/back
+    int steering = map(joy1_X_Value, -2048, 2047, -255, 255);   // left/right
 
     // Differential motor mixing
-    leftCmd  = throttle + steering;
-    rightCmd = throttle - steering;
+    int leftCmd  = throttle + steering;
+    int rightCmd = throttle - steering;
 
     // Constrain output to motor-safe range
     leftCmd  = constrain(leftCmd,  -255, 255);
@@ -119,6 +123,7 @@ void movementControl(int joy1_X_Value, int joy1_Y_Value) {
     setMotor(L_speed, L_dir1, L_dir2, leftCmd);
     setMotor(R_speed, R_dir1, R_dir2, rightCmd);
 }
+
 
 void setMotor(int pwmPin, int d1, int d2, int cmd) {
     int speedVal = abs(cmd);
