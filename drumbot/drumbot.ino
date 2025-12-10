@@ -3,12 +3,12 @@
 // #include <AsyncTCP.h>
 #include <uri/UriBraces.h>
 #include <esp_task_wdt.h>
-#include <Servo.h>
+#include <ESP32Servo.h>
 
 WebServer server(80);
 
-const char WIFI_SSID[] = "space_program";
-const char WIFI_PASSWORD[] = "538976";
+const char WIFI_SSID[] = "esp32test";
+const char WIFI_PASSWORD[] = "test1234";
 
 // TODO: rename to more clear names
 const uint8_t L_speed = 27; // L motor PWM
@@ -17,9 +17,9 @@ const uint8_t L_dir2 = 26; // L motor direction control 2
 const uint8_t R_speed = 14; // R motor PWM
 const uint8_t R_dir1 = 12; // R motor direction control 1
 const uint8_t R_dir2 = 13; // R motor direction control 2
-const uint8_t W_motor_SIGNAL = 5;
+const uint8_t W_motor_SIGNAL = 21;
 // TODO: add control pin
-
+const uint8_t D_STBY = 33;
 
 const esp_task_wdt_config_t watchdog_config(1, false);
 Servo ESC;     // create servo object to control the ESC
@@ -45,6 +45,7 @@ void setup() {
     Serial.begin(9600);
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    digitalWrite(D_STBY, LOW);
     // start watchdog
     esp_task_wdt_init(&watchdog_config); //enable panic so ESP32 restarts
     esp_task_wdt_add(NULL); //add current thread to WDT watch
@@ -70,12 +71,12 @@ void setup() {
     });
     server.on(UriBraces("/control/a_button_off"), []() {
         Serial.println("A button falling edge");
-        ESC.write(0)
+        ESC.write(0);
         server.send(204);
     });
     server.on(UriBraces("/control/a_button"), []() {
-        Serial.println("A button falling edge");
-        ESC.write(180)
+        Serial.println("A button rising edge");
+        ESC.write(180);
         server.send(204);
     });
     // Attach the ESC on pin 9
@@ -89,35 +90,41 @@ void setup() {
     pinMode(R_dir1, OUTPUT);
     pinMode(R_dir2, OUTPUT);
 
-    pinMode()
+    pinMode(D_STBY, OUTPUT);
 
+    digitalWrite(D_STBY, HIGH);
+
+    server.begin();
 }
 
 void loop() {
     // put your main code here, to run repeatedly:
     server.handleClient();
-    delay(2);
+    delay(100);
+    esp_task_wdt_reset();
+    Serial.println("test");
 }
 
 void weaponControl(int joy2Value) {
 
-    motorValue = map(joy2Value, 0, 1023, 0, 180);   // scale it to use it with the servo library (value between 0 and 180)
+    int motorValue = map(joy2Value, 0, 0xff, 0, 180);   // scale it to use it with the servo library (value between 0 and 180)
     ESC.write(motorValue);    // Send the signal to the ESC
 }
 void movementControl(int joy1_X_Value, int joy1_Y_Value) {
     // Convert to -255..255 ranges
-    // may be -2048 / 2047
     //
-    int throttle = map(joy1_Y_Value, -2048, 2047, -255, 255);   // forward/back
-    int steering = map(joy1_X_Value, -2048, 2047, -255, 255);   // left/right
+    int throttle = map(joy1_Y_Value, -0x8000, 0x7fff, -0xff, 0xff);   // forward/back
+    int steering = map(joy1_X_Value, -0x8000, 0x7fff, -0xff, 0xff);   // left/right
 
     // Differential motor mixing
     int leftCmd  = throttle + steering;
     int rightCmd = throttle - steering;
+    Serial.println(leftCmd);
+    Serial.println(rightCmd);
 
     // Constrain output to motor-safe range
-    leftCmd  = constrain(leftCmd,  -255, 255);
-    rightCmd = constrain(rightCmd, -255, 255);
+    leftCmd  = constrain(leftCmd,  -0xff, 0xff);
+    rightCmd = constrain(rightCmd, -0xff, 0xff);
 
     // Send commands to motors
     setMotor(L_speed, L_dir1, L_dir2, leftCmd);

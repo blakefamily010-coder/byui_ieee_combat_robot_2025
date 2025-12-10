@@ -5,7 +5,7 @@ import requests
 import time
 
 ESP32_IP_ADDR = "http://10.57.236.200"  # should be the address of a router
-SEND_WINDOW_S = 0.05
+SEND_WINDOW_S = 0.1
 TRIGGER_THRESHOLD = 700
 
 for device in devices:
@@ -32,6 +32,7 @@ button_triggered = False
 button_time = float("inf")
 gamepad = devices.gamepads[0];
 events = gamepad.read()
+send_timer = 0.0
 while True:
     timer = time.clock_gettime(time.CLOCK_MONOTONIC);
     if button_triggered:
@@ -41,6 +42,7 @@ while True:
     if (timer > button_time):
         button_time = float("inf")
         send("control/a_button_off")
+
     # # events
     #
     # ABS_X -> left stick x
@@ -117,10 +119,17 @@ while True:
                 else:
                     send("control/y_button_off")
             # case "BTN_TL":
-    if tmp:
-        send(f"control/l_trigger/0x{ltrig:x}")
-        send(f"control/lstick/0x{lstickx:x}/0x{lsticky:x}")
-        send(f"control/rstick/0x{rstickx:x}/0x{rsticky:x}")
+    timer = time.clock_gettime(CLOCK_MONOTONIC)
+    if send_timer >= timer:
+        send_timer = timer + SEND_WINDOW_S
+        ltrig /= 16
+        lstickx /= 16
+        lsticky /= 16
+        rstickx /= 16
+        rsticky /= 16
+        send(f"control/l_trigger/{ltrig}")
+        send(f"control/lstick/{lstickx}/{lsticky}")
+        send(f"control/rstick/{rstickx:x}/{rsticky}")
+        send("connect")
 
-    send("connect")
     # time.sleep(UPDATE_INTERVAL_S)

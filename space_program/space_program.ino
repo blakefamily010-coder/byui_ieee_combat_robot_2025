@@ -38,6 +38,7 @@ void connect_poll() {
     esp_task_wdt_reset();
 }
 void handle_wifi_events(WiFiEvent_t event) {
+    Serial.println(event);
     switch (event) {
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
             delay(200);
@@ -54,8 +55,10 @@ void setup() {
     // - connect to network
     // - setup disconect callback
     //     - stop if not connected
-    Serial.begin(115200);
+    Serial.begin(9600);
+    Serial.println("TEST1");
     WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     WiFi.onEvent(handle_wifi_events);
 
@@ -90,31 +93,34 @@ void setup() {
         Serial.println("test1");
         int l_trigger = server.pathArg(0).toInt();
         weapon_control(l_trigger);
+        server.send(204);
 
     });
     server.on(UriBraces("/control/a_button_off"), []() {
         Serial.println("A button falling edge");
-        setMotor(W_motor_PWM, W_dir1, W_dir2, 255);
+        setMotor(W_motor_PWM, W_dir1, W_dir2, 0);
         server.send(204);
     });
     server.on(UriBraces("/control/a_button"), []() {
         Serial.println("A button rising edge");
-        setMotor(W_motor_PWM, W_dir1, W_dir2, 0);
+        setMotor(W_motor_PWM, W_dir1, W_dir2, 255);
         server.send(204);
     });
 
-    pinMode(L_speed, OUTPUT);
+    // pinMode(L_speed, OUTPUT);
     pinMode(L_dir1, OUTPUT);
     pinMode(L_dir2, OUTPUT);
+    //
+    ledcAttach(L_speed, 20000, 8);
 
-    pinMode(R_speed, OUTPUT);
+
+    ledcAttach(R_speed, 20000, 8);
     pinMode(R_dir1, OUTPUT);
     pinMode(R_dir2, OUTPUT);
 
-    pinMode(W_motor_PWM, OUTPUT);
+    ledcAttach(W_motor_PWM, 20000, 8);
     pinMode(W_dir1, OUTPUT);
     pinMode(W_dir2, OUTPUT);
-
     
     server.begin();
 
@@ -122,12 +128,13 @@ void setup() {
     digitalWrite(D_STBY, HIGH);
     pinMode(W_STBY, OUTPUT);
     digitalWrite(W_STBY, HIGH);
+
 }
 
 void loop() {
     // put your main code here, to run repeatedly:
     server.handleClient();
-    delay(20);
+    delay(30);
     esp_task_wdt_reset();
 }
 
@@ -135,6 +142,7 @@ void weapon_control(int l_trigger) {
 
     int motor_cmd = map(l_trigger, 0, 0xffff, -255, 255);
     setMotor(W_motor_PWM, W_dir1, W_dir2, motor_cmd);
+    Serial.println(motor_cmd);
 
 }
 
@@ -147,6 +155,8 @@ void movementControl(int joy1_X_Value, int joy1_Y_Value) {
     // Differential motor mixing
     int leftCmd  = throttle + steering;
     int rightCmd = throttle - steering;
+    Serial.println(leftCmd);
+    Serial.println(rightCmd);
 
     // Constrain output to motor-safe range
     leftCmd  = constrain(leftCmd,  -0xff, 0xff);
@@ -161,17 +171,24 @@ void setMotor(int pwmPin, int d1, int d2, int cmd) {
     uint8_t speedVal = abs(cmd);
 
     if (cmd > 0) {// Forward
+        Serial.println("frwd");
         digitalWrite(d1, HIGH);
         digitalWrite(d2, LOW);
     } 
     else if (cmd < 0) {// Reverse
+        Serial.println("rev");
         digitalWrite(d1, LOW);
         digitalWrite(d2, HIGH);
     } 
     else {// Stop
+        Serial.println("stop");
         digitalWrite(d1, LOW);
         digitalWrite(d2, LOW);
     }
+    Serial.print("speedVal: ");
+    Serial.println(speedVal);
+    Serial.print("cmd: ");
+    Serial.println(cmd);
 
-    analogWrite(pwmPin, speedVal);
+    ledcWrite(pwmPin, speedVal);   // or ledcWrite
 }

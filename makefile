@@ -19,4 +19,4 @@ clean:
 server: ignore_time
 	python3 server/main.py
 minicom:
-	minicom -b 9600
+	minicom -b 9600 -D /dev/ttyUSB0
